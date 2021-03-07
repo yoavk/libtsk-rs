@@ -24,6 +24,8 @@ jobs:
       run: echo "LIBCLANG_PATH=$((gcm clang).source -replace "clang.exe")" >> $env:GITHUB_ENV
 
     - uses: actions/checkout@v2
+      with:
+        submodules: 'true'
     - name: Build
       run: cargo build --verbose
     - name: Run tests
