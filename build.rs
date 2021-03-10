@@ -1,4 +1,5 @@
 extern crate bindgen;
+use glob::glob;
 use std::process::Command;
 use std::env;
 use std::path::PathBuf;
@@ -77,7 +78,10 @@ fn windows_compile_tsk(target_arch: &str) {
         .join(r"Microsoft Visual Studio\Installer\vswhere.exe");
     // Run vswhere.exe to get install path
     let output = Command::new(&vs_where_path)
-        .args(&["-latest", "-property", "installationPath"])
+        .args(&["-latest",
+                "-requires", "Microsoft.Component.MSBuild",
+                "-products", "*",
+                "-property", "installationPath"])
         .output()
         .expect(&format!(r"Error executing vswhere: {}", vs_where_path.display()));
     
@@ -87,7 +91,7 @@ fn windows_compile_tsk(target_arch: &str) {
     );
 
     // Append msbuild.exe to install path
-    let msbuild_path = install_path.join(r"MSBuild\Current\Bin\MSBuild.exe");
+    let msbuild_path = glob(&install_path.join(r"MSBuild\**\Bin\MSBuild.exe").to_string_lossy().to_string()).unwrap().next().unwrap().unwrap();
     eprintln!("msbuild_path -> {:?}\n", msbuild_path);
 
     // Fix libtsk.vcxproj (can be removed once https://github.com/sleuthkit/sleuthkit/pull/2205 is merged and released upstream)
@@ -101,7 +105,7 @@ fn windows_compile_tsk(target_arch: &str) {
     let output = Command::new(&msbuild_path)
         .args(&[
             r"-target:libtsk",
-            r"/p:PlatformToolset=v142",
+            r"/p:PlatformToolset=v141",
 
             if target_arch == "x86" {
                 r"/p:Platform=Win32"
